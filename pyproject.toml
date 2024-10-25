@@ -8,6 +8,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+pymycobot = "^3.6.4"
+opencv-python = "^4.10.0.84"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
@@ -19,6 +21,9 @@ cruft = "^2.15"
 # Remove darglint once ruff adds support for the rules.
 # Tracking: https://github.com/astral-sh/ruff/issues/458
 darglint = "^1.8.1"
+
+[tool.poetry.scripts]
+validate_robot = "acton_ai.scripts.validate_robot:main"
 
 [build-system]
 requires = ["poetry>=0.12"]
