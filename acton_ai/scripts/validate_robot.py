@@ -10,6 +10,5 @@ def main():
     print("MyarmMotor positions: ", motor.get_joints_angle())
 
 
-
 if __name__ == "__main__":
     main()
