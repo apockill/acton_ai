@@ -1,5 +1,5 @@
-from pymycobot import MyArmC
-from acton_ai.connection_utilities import find_myarm_motor, find_myarm_controller
+from acton_ai.connection_utilities import find_myarm_controller, find_myarm_motor
+
 
 # TODO: Add --port argument to the script
 def main():
