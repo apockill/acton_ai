@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from pymycobot import MyArmC, MyArmM
@@ -36,19 +37,20 @@ def _find_arm(arm_cls: type[MyArmC] | type[MyArmM]) -> MyArmC:
 
         # This should be supported by both arms
         try:
-            servo_statuses = arm.get_servos_status()
+            servo_voltages = arm.get_servos_voltage()
         except TypeError as e:
             msg = "This is likely an arm, but may not be in communication mode."
             exceptions[port] = (type(e), str(e) + f": {msg}")
             continue
 
-        is_controller = all(s == 0 for s in servo_statuses)
+        # The Mover has servos that go above 20v, the controller does not.
+        is_controller = all(s < 20 for s in servo_voltages)
 
         if is_controller and arm_cls is MyArmC:
-            print(f"Found MyArmC on port {port}")
+            logging.info(f"Found MyArmC on port {port}")
             return arm
         elif not is_controller and arm_cls is MyArmM:
-            print(f"Found MyArmM on port {port}")
+            logging.info(f"Found MyArmM on port {port}")
             return arm
         else:
             exceptions[port] = (
