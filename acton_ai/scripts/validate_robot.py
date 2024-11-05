@@ -1,13 +1,18 @@
 from acton_ai.connection_utilities import find_myarm_controller, find_myarm_motor
+from acton_ai.logger import logger
 
 
-# TODO: Add --port argument to the script
 def main():
+    logger.info("Bringing up motors")
     controller = find_myarm_controller()
-    print("Controller positions: ", controller.get_joints_angle())
+    mover = find_myarm_motor()
 
-    motor = find_myarm_motor()
-    print("MyarmMotor positions: ", motor.get_joints_angle())
+    # Get the mover in a known state
+    mover.bring_up_motors()
+
+    while True:
+        controller_angles = controller.get_joints_angle()
+        mover.set_joints_from_controller_angles(controller_angles, speed=20)
 
 
 if __name__ == "__main__":
