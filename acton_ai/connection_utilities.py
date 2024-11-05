@@ -1,8 +1,13 @@
-import logging
 from pathlib import Path
+from typing import TypeVar
 
-from pymycobot import MyArmC, MyArmM
+from pymycobot import MyArmC
 from serial import SerialException
+
+from .logger import logger
+from .mover_wrapper import HelpfulMyArmM
+
+T = TypeVar("T")
 
 
 class NoArmFoundError(Exception):
@@ -18,7 +23,7 @@ def _find_possible_ports() -> list[Path]:
     return list(Path(_COMS_DIR).glob(_ARM_PORT_PATTERN))
 
 
-def _find_arm(arm_cls: type[MyArmC] | type[MyArmM]) -> MyArmC:
+def _find_arm(arm_cls: type[T]) -> T:
     check_ports = _find_possible_ports()
     exceptions: dict[Path, Exception] = {}
     for port in check_ports:
@@ -38,6 +43,8 @@ def _find_arm(arm_cls: type[MyArmC] | type[MyArmM]) -> MyArmC:
         # This should be supported by both arms
         try:
             servo_voltages = arm.get_servos_voltage()
+            if servo_voltages is None:
+                raise TypeError("Servo voltages were None")
         except TypeError as e:
             msg = "This is likely an arm, but may not be in communication mode."
             exceptions[port] = (type(e), str(e) + f": {msg}")
@@ -47,10 +54,10 @@ def _find_arm(arm_cls: type[MyArmC] | type[MyArmM]) -> MyArmC:
         is_controller = all(s < 20 for s in servo_voltages)
 
         if is_controller and arm_cls is MyArmC:
-            logging.info(f"Found MyArmC on port {port}")
+            logger.info(f"Found MyArmC on port {port}")
             return arm
-        elif not is_controller and arm_cls is MyArmM:
-            logging.info(f"Found MyArmM on port {port}")
+        elif not is_controller and arm_cls is HelpfulMyArmM:
+            logger.info(f"Found MyArmM on port {port}")
             return arm
         else:
             exceptions[port] = (
@@ -69,8 +76,8 @@ def _find_arm(arm_cls: type[MyArmC] | type[MyArmM]) -> MyArmC:
     )
 
 
-def find_myarm_motor() -> MyArmM:
-    return _find_arm(MyArmM)
+def find_myarm_motor() -> HelpfulMyArmM:
+    return _find_arm(HelpfulMyArmM)
 
 
 def find_myarm_controller() -> MyArmC:
