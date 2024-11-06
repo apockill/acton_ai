@@ -2,7 +2,7 @@ from acton_ai.connection_utilities import find_myarm_controller, find_myarm_moto
 from acton_ai.logger import logger
 
 
-def main():
+def main() -> None:
     logger.info("Bringing up motors")
     controller = find_myarm_controller()
     mover = find_myarm_motor()

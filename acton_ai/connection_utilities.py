@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import TypeVar
 
 from pymycobot import MyArmC
+from pymycobot.myarm_api import MyArmAPI
 from serial import SerialException
 
 from .logger import logger
 from .mover_wrapper import HelpfulMyArmM
 
-T = TypeVar("T")
+T = TypeVar("T", bound=MyArmAPI)
 
 
 class NoArmFoundError(Exception):
@@ -25,7 +26,7 @@ def _find_possible_ports() -> list[Path]:
 
 def _find_arm(arm_cls: type[T]) -> T:
     check_ports = _find_possible_ports()
-    exceptions: dict[Path, Exception] = {}
+    exceptions: dict[Path, tuple[type[Exception], str]] = {}
     for port in check_ports:
         try:
             # For some reason, the baudrate is required to be set to 1000000. The
@@ -55,10 +56,10 @@ def _find_arm(arm_cls: type[T]) -> T:
 
         if is_controller and arm_cls is MyArmC:
             logger.info(f"Found MyArmC on port {port}")
-            return arm
+            return arm  # type: ignore
         elif not is_controller and arm_cls is HelpfulMyArmM:
             logger.info(f"Found MyArmM on port {port}")
-            return arm
+            return arm  # type: ignore
         else:
             exceptions[port] = (
                 ValueError,

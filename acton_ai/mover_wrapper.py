@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from functools import cached_property
+from typing import cast
 
 from pymycobot import MyArmM
 
@@ -15,11 +16,11 @@ class _Joint:
     joint_id: int
     flip: bool
     buffer: int
-    """This is the buffer to add to the joint limits to prevent the robot from hitting 
+    """This is the buffer to add to the joint limits to prevent the robot from hitting
     the physical limits, in degrees. Joint ID 2 especially seemed to need this."""
 
     @property
-    def array_idx(self):
+    def array_idx(self) -> int:
         return self.joint_id - 1
 
 
@@ -39,19 +40,19 @@ class HelpfulMyArmM(MyArmM):
 
     @cached_property
     def joint_mins(self) -> list[int]:
-        mins = self.get_joints_min()
+        mins = cast(list[int], self.get_joints_min())
         for joint in self.controller_joint_mapping:
             mins[joint.array_idx] += joint.buffer
         return mins
 
     @cached_property
     def joints_max(self) -> list[int]:
-        maxes = self.get_joints_max()
+        maxes = cast(list[int], self.get_joints_max())
         for joint in self.controller_joint_mapping:
             maxes[joint.array_idx] -= joint.buffer
         return maxes
 
-    def clamp_angle(self, angle, joint: _Joint):
+    def clamp_angle(self, angle: float, joint: _Joint) -> float:
         """Clamp an arbitrary angle to a given joint's limits"""
         max_angle = self.joints_max[joint.array_idx]
         min_angle = self.joint_mins[joint.array_idx]
@@ -63,7 +64,7 @@ class HelpfulMyArmM(MyArmM):
         assert len(angles) == len(self.joints_max), "Incorrect number of angles"
 
         for joint in self.controller_joint_mapping:
-            desired_angle = angles[joint.array_idx]
+            desired_angle: float = angles[joint.array_idx]
             if joint.flip:
                 desired_angle = -desired_angle
 

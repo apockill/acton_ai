@@ -4,7 +4,7 @@ from acton_ai.connection_utilities import find_myarm_motor
 from acton_ai.logger import logger
 
 
-def main():
+def main() -> None:
     mover = find_myarm_motor()
     mover.set_robot_power_on()
 
