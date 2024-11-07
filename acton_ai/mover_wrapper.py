@@ -60,7 +60,9 @@ class HelpfulMyArmM(MyArmM):
         clamped = max(min_angle, min(max_angle, angle))
         return clamped
 
-    def set_joints_from_controller_angles(self, angles: list[int], speed: int) -> None:
+    def set_joints_from_controller_angles(
+        self, angles: list[float], speed: int
+    ) -> None:
         assert len(angles) == len(self.joints_max), "Incorrect number of angles"
 
         for joint in self.controller_joint_mapping:
@@ -69,8 +71,9 @@ class HelpfulMyArmM(MyArmM):
                 desired_angle = -desired_angle
 
             desired_angle = self.clamp_angle(desired_angle, joint)
+            angles[joint.array_idx] = desired_angle
 
-            self.set_joint_angle(joint.joint_id, angle=desired_angle, speed=speed)
+        self.set_joints_angle(angles, speed)
 
     def bring_up_motors(self) -> None:
         """This sequence is designed to bring up the motors reliably"""
