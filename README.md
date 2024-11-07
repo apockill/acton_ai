@@ -1,5 +1,8 @@
 # acton_ai
-My reppolicies for robot arms, and making them useful with multi-modal LLMs.
+This repo contains tooling for data collection, management, and training of ML models
+for robot action policies. It is currently only compatible with ElephantRobotics' 
+MyArmM and MyArmC robotic arms.
+
 _________________
 
 [![PyPI version](https://badge.fury.io/py/acton_ai.svg)](http://badge.fury.io/py/acton_ai)
@@ -12,6 +15,21 @@ _________________
 
 [Read Latest Documentation](https://apockill.github.io/acton_ai/) - [Browse GitHub Code Repository](https://github.com/apockill/acton_ai/)
 _________________
+
+## Tools
+
+After installing ([under Development](#Development)) the package, the following tools
+will be in your path:
+
+`teleop`:
+- Passes joint from MyArmC to MyArmM, allowing for teleoperation of the MyArmM
+
+`validate_robot`: 
+- Prints the firmware and hardware version of the MyArmM and MyArmC arms
+
+`calibrate_robot`:
+- Places the MyArmM into a zero'ed out position, and guides user through calibration of
+  the MyArmC
 
 ## Development
 
