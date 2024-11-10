@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from functools import cached_property
+from time import sleep
 from typing import cast
 
 from pymycobot import MyArmM
