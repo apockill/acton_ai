@@ -16,9 +16,18 @@ class MotorsNotPoweredError(Exception):
 class _Joint:
     joint_id: int
     flip: bool
-    buffer: int
-    """This is the buffer to add to the joint limits to prevent the robot from hitting
+    left_buffer: int
+    """This is the buffer to add to the joint minimum to prevent the robot from hitting
     the physical limits, in degrees. Joint ID 2 especially seemed to need this."""
+
+    right_buffer: int
+    """This the buffer angle to subtract from the robots reported joint max, when
+    setting the joint angles."""
+
+    scaling_factor: float = 1.0
+    """This is a scaling factor to apply to the joint angles. This is useful for
+    adjusting grippers, if you want to have small motions lead to larger motions, or
+    vice versa."""
 
     @property
     def array_idx(self) -> int:
@@ -29,66 +38,119 @@ class HelpfulMyArmM(MyArmM):
     """A wrapper around MyArmM that works around idiosyncrasies in the API"""
 
     controller_joint_mapping = [
-        _Joint(joint_id=1, flip=True, buffer=0),
-        _Joint(joint_id=2, flip=True, buffer=10),
-        _Joint(joint_id=3, flip=True, buffer=0),
-        _Joint(joint_id=4, flip=True, buffer=0),
-        _Joint(joint_id=5, flip=False, buffer=0),
-        _Joint(joint_id=6, flip=True, buffer=0),
-        _Joint(joint_id=7, flip=False, buffer=10),
+        _Joint(joint_id=1, flip=True, left_buffer=5, right_buffer=5),
+        _Joint(joint_id=2, flip=True, left_buffer=20, right_buffer=10),
+        _Joint(joint_id=3, flip=True, left_buffer=5, right_buffer=5),
+        _Joint(joint_id=4, flip=True, left_buffer=5, right_buffer=5),
+        _Joint(joint_id=5, flip=False, left_buffer=5, right_buffer=10),
+        _Joint(joint_id=6, flip=True, left_buffer=5, right_buffer=5),
+        _Joint(
+            joint_id=7, flip=False, left_buffer=5, right_buffer=5, scaling_factor=1.5
+        ),
     ]
-    """This maps joints from the MyArmC to the MyArmM, as observed by the author"""
+    """This maps joints from the MyArmC to the MyArmM, as observed by the author. 
+    Any value with a 5 was not found through empirical testing, and is arbitrary.
+    """
 
     @cached_property
-    def joint_mins(self) -> list[int]:
-        mins = cast(list[int], self.get_joints_min())
+    def bounded_joint_mins(self) -> tuple[int]:
+        mins = list(self.true_joint_mins)
         for joint in self.controller_joint_mapping:
-            mins[joint.array_idx] += joint.buffer
-        return mins
+            mins[joint.array_idx] += joint.left_buffer
+        return tuple(mins)
 
     @cached_property
-    def joints_max(self) -> list[int]:
-        maxes = cast(list[int], self.get_joints_max())
+    def bounded_joints_max(self) -> tuple[int]:
+        maxes = list(self.true_joints_max)
         for joint in self.controller_joint_mapping:
-            maxes[joint.array_idx] -= joint.buffer
-        return maxes
+            maxes[joint.array_idx] -= joint.right_buffer
+        return tuple(maxes)
+
+    @cached_property
+    def true_joint_mins(self) -> tuple[int]:
+        return cast(tuple[int], tuple(self.get_joints_min()))
+
+    @cached_property
+    def true_joints_max(self) -> tuple[int]:
+        return cast(tuple[int], tuple(self.get_joints_max()))
 
     def clamp_angle(self, angle: float, joint: _Joint) -> float:
         """Clamp an arbitrary angle to a given joint's limits"""
-        max_angle = self.joints_max[joint.array_idx]
-        min_angle = self.joint_mins[joint.array_idx]
+        max_angle = self.bounded_joints_max[joint.array_idx]
+        min_angle = self.bounded_joint_mins[joint.array_idx]
 
         clamped = max(min_angle, min(max_angle, angle))
         return clamped
 
     def set_joints_from_controller_angles(
-        self, angles: list[float], speed: int
+        self, controller_angles: list[float], speed: int, debug: bool = False
     ) -> None:
-        assert len(angles) == len(self.joints_max), "Incorrect number of angles"
+        """Set the joints of the robot from the controller angles
+
+        :param controller_angles: The angles from the controller
+        :param speed: The speed to set the joints
+        :param debug: If true, does extra API calls to verify the movers joint positions
+            are within the bounds set by the controller mapping. If they're not, this
+            can manifest as a 'stuck' robot, where the robot is unable to move in any
+            direction.
+        """
+        assert len(controller_angles) == len(
+            self.bounded_joints_max
+        ), "Incorrect number of angles"
+
+        if debug:
+            self.check_motors_in_bounds()
 
         for joint in self.controller_joint_mapping:
-            desired_angle: float = angles[joint.array_idx]
+            desired_angle: float = controller_angles[joint.array_idx]
             if joint.flip:
                 desired_angle = -desired_angle
-
+            desired_angle *= joint.scaling_factor
             desired_angle = self.clamp_angle(desired_angle, joint)
-            angles[joint.array_idx] = desired_angle
+            controller_angles[joint.array_idx] = desired_angle
 
-        self.set_joints_angle(angles, speed)
+        self.set_joints_angle(controller_angles, speed)
+
+    def check_motors_in_bounds(self) -> bool:
+        """Check if the motors are within the true joint bounds"""
+
+        motor_angles = self.get_joints_angle()
+        for joint in self.controller_joint_mapping:
+            angle = motor_angles[joint.array_idx]
+            minimum = self.true_joint_mins[joint.array_idx]
+            maximum = self.true_joints_max[joint.array_idx]
+            if angle < minimum:
+                logger.error(
+                    f"Joint {joint.joint_id} is below the minimum: {angle=} {minimum=}"
+                )
+                return False
+            if angle > maximum:
+                logger.error(
+                    f"Joint {joint.joint_id} is above the maximum: {angle=} {maximum=}"
+                )
+                return False
+        return True
 
     def bring_up_motors(self) -> None:
         """This sequence is designed to bring up the motors reliably"""
+        self.set_robot_power_on()
 
         while True:
-            servo_status = self.get_servos_status()
+            # Author has observed first call can occasionally be None while subsequent
+            # calls succeed.
+            for _ in range(5):
+                servo_status = self.get_servos_status()
+                if servo_status is not None:
+                    break
 
             if servo_status is None:
                 logger.warning("Servos not working... Clearing errors and retrying")
-                self.clear_robot_err()
-                self.restore_servo_system_param()
-                self.clear_recv_queue()
+                self.set_robot_power_off()
                 sleep(0.25)
                 self.set_robot_power_on()
+                sleep(0.25)
+                self.clear_robot_err()
+                self.restore_servo_system_param()
                 continue
 
             servos_unpowered = all(s == 255 for s in servo_status)

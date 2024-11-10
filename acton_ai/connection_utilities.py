@@ -47,7 +47,10 @@ def _find_arm(arm_cls: type[T]) -> T:
             if servo_voltages is None:
                 raise TypeError("Servo voltages were None")
         except TypeError as e:
-            msg = "This is likely an arm, but may not be in communication mode."
+            msg = (
+                "This is likely an arm, but may not be in communication mode, or the "
+                "power supply is not connected."
+            )
             exceptions[port] = (type(e), str(e) + f": {msg}")
             continue
 
