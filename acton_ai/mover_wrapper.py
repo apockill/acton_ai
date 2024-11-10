@@ -77,22 +77,24 @@ class HelpfulMyArmM(MyArmM):
 
     def bring_up_motors(self) -> None:
         """This sequence is designed to bring up the motors reliably"""
+
         while True:
             servo_status = self.get_servos_status()
+
+            if servo_status is None:
+                logger.warning("Servos not working... Clearing errors and retrying")
+                self.clear_robot_err()
+                self.restore_servo_system_param()
+                self.clear_recv_queue()
+                sleep(0.25)
+                self.set_robot_power_on()
+                continue
 
             servos_unpowered = all(s == 255 for s in servo_status)
             if servos_unpowered:
                 raise MotorsNotPoweredError(
                     "Servos are unpowered. Is the e-stop pressed?"
                 )
-
-            if servo_status is None:
-                logger.warning("Servos not working... Clearing errors and retrying")
-                self.clear_robot_err()
-                self.restore_servo_system_param()
-                self.set_robot_power_on()
-                self.clear_recv_queue()
-                continue
 
             if all(s == 0 for s in servo_status):
                 logger.info("Servos are good to go!")

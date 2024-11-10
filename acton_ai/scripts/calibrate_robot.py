@@ -6,7 +6,7 @@ from acton_ai.logger import logger
 
 def main() -> None:
     mover = find_myarm_motor()
-    mover.set_robot_power_on()
+    mover.bring_up_motors()
 
     # Get the mover in a zero state
     for i in range(7):
