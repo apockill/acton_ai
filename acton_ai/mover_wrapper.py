@@ -37,6 +37,7 @@ class _Joint:
 class HelpfulMyArmM(MyArmM):
     """A wrapper around MyArmM that works around idiosyncrasies in the API"""
 
+    # TODO: In the make this loadable as a per-robot configuration file.
     controller_joint_mapping = [
         _Joint(joint_id=1, flip=True, left_buffer=5, right_buffer=5),
         _Joint(joint_id=2, flip=True, left_buffer=20, right_buffer=10),
