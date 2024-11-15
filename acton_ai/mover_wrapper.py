@@ -49,30 +49,30 @@ class HelpfulMyArmM(MyArmM):
             joint_id=7, flip=False, left_buffer=5, right_buffer=5, scaling_factor=1.5
         ),
     ]
-    """This maps joints from the MyArmC to the MyArmM, as observed by the author. 
+    """This maps joints from the MyArmC to the MyArmM, as observed by the author.
     Any value with a 5 was not found through empirical testing, and is arbitrary.
     """
 
     @cached_property
-    def bounded_joint_mins(self) -> tuple[int]:
+    def bounded_joint_mins(self) -> tuple[int, ...]:
         mins = list(self.true_joint_mins)
         for joint in self.controller_joint_mapping:
             mins[joint.array_idx] += joint.left_buffer
         return tuple(mins)
 
     @cached_property
-    def bounded_joints_max(self) -> tuple[int]:
+    def bounded_joints_max(self) -> tuple[int, ...]:
         maxes = list(self.true_joints_max)
         for joint in self.controller_joint_mapping:
             maxes[joint.array_idx] -= joint.right_buffer
         return tuple(maxes)
 
     @cached_property
-    def true_joint_mins(self) -> tuple[int]:
+    def true_joint_mins(self) -> tuple[int, ...]:
         return cast(tuple[int], tuple(self.get_joints_min()))
 
     @cached_property
-    def true_joints_max(self) -> tuple[int]:
+    def true_joints_max(self) -> tuple[int, ...]:
         return cast(tuple[int], tuple(self.get_joints_max()))
 
     def clamp_angle(self, angle: float, joint: _Joint) -> float:
@@ -134,6 +134,11 @@ class HelpfulMyArmM(MyArmM):
 
     def bring_up_motors(self) -> None:
         """This sequence is designed to bring up the motors reliably"""
+        # Sanity check communication is working
+        assert self.is_robot_moving() == 0, "Robot is moving, what's going on?"
+        assert self.get_robot_firmware_version() > 0
+
+        # Turn on power
         self.set_robot_power_on()
 
         while True:
