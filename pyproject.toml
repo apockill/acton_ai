@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pymycobot = "^3.6.5"
+pymycobot = "^3.6.6"
 opencv-python = "^4.10.0.84"
 
 [tool.poetry.dev-dependencies]
