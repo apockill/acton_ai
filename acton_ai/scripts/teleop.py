@@ -12,7 +12,7 @@ def main() -> None:
 
     while True:
         controller_angles = controller.get_joints_angle()
-        mover.set_joints_from_controller_angles(controller_angles, speed=50)
+        mover.set_joints_from_controller_angles(controller_angles, speed=50, debug=True)
 
 
 if __name__ == "__main__":
