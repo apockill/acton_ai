@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acton_ai"
-version = "0.1.0"
+version = "0.2.0"
 description = "My reppolicies for robot arms, and making them useful with multi-modal LLMs."
 authors = ["apockill <apocthiel@gmail.com>"]
 license = "Proprietary"
@@ -8,7 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pymycobot = "^3.6.6"
+pymycobot = "^3.6.7"
 opencv-python = "^4.10.0.84"
 
 [tool.poetry.dev-dependencies]
