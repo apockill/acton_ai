@@ -118,12 +118,13 @@ class HelpfulMyArmM(MyArmM):
     def prompt_user_to_bring_motors_into_bounds(self) -> None:
         """This function prompts the user to bring the motors into bounds"""
 
-        self.set_servos_enabled(False)
 
         while True:
             out_of_bounds = self.check_out_of_bounds_motors()
             if not out_of_bounds:
                 break
+            self.set_servos_enabled(False)
+
             logger.error(
                 f"Motors {out_of_bounds} are out of bounds. Please adjust the motors"
             )
