@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from functools import cached_property
 from time import sleep
 from typing import cast
@@ -6,6 +5,8 @@ from typing import cast
 from pymycobot import MyArmM
 
 from acton_ai.logger import logger
+
+from .joint import Joint
 
 
 class MotorsNotPoweredError(Exception):
@@ -75,7 +76,7 @@ class HelpfulMyArmM(MyArmM):
     def true_joints_max(self) -> tuple[int, ...]:
         return cast(tuple[int], tuple(self.get_joints_max()))
 
-    def clamp_angle(self, angle: float, joint: _Joint) -> float:
+    def clamp_angle(self, angle: float, joint: Joint) -> float:
         """Clamp an arbitrary angle to a given joint's limits"""
         max_angle = self.bounded_joints_max[joint.array_idx]
         min_angle = self.bounded_joint_mins[joint.array_idx]
@@ -105,9 +106,7 @@ class HelpfulMyArmM(MyArmM):
 
         for joint in self.controller_joint_mapping:
             desired_angle: float = controller_angles[joint.array_idx]
-            if joint.flip:
-                desired_angle = -desired_angle
-            desired_angle *= joint.scaling_factor
+            desired_angle = joint.apply_transform(desired_angle)
             desired_angle = self.clamp_angle(desired_angle, joint)
             controller_angles[joint.array_idx] = desired_angle
 

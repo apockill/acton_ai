@@ -12,8 +12,8 @@ def main() -> None:
     mover.prompt_user_to_bring_motors_into_bounds()
 
     while True:
-        controller_angles = controller.get_joints_angle()
-        mover.set_joints_from_controller_angles(controller_angles, speed=50, debug=True)
+        target_angles = controller.get_joint_angles_in_mover_space()
+        mover.set_joints_from_controller_angles(target_angles, speed=100, debug=True)
 
 
 if __name__ == "__main__":

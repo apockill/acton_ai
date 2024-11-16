@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import TypeVar
 
-from pymycobot import MyArmC
 from pymycobot.myarm_api import MyArmAPI
 from serial import SerialException
 
+from .controller_wrapper import HelpfulMyArmC
 from .logger import logger
 from .mover_wrapper import HelpfulMyArmM
 
@@ -84,5 +84,5 @@ def find_myarm_motor() -> HelpfulMyArmM:
     return _find_arm(HelpfulMyArmM)
 
 
-def find_myarm_controller() -> MyArmC:
-    return _find_arm(MyArmC)
+def find_myarm_controller() -> HelpfulMyArmC:
+    return _find_arm(HelpfulMyArmC)
