@@ -57,7 +57,7 @@ def _find_arm(arm_cls: type[T]) -> T:
         # The Mover has servos that go above 20v, the controller does not.
         is_controller = all(s < 20 for s in servo_voltages)
 
-        if is_controller and arm_cls is MyArmC:
+        if is_controller and arm_cls is HelpfulMyArmC:
             logger.info(f"Found MyArmC on port {port}")
             return arm  # type: ignore
         elif not is_controller and arm_cls is HelpfulMyArmM:
