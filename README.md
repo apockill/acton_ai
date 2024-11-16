@@ -21,13 +21,13 @@ _________________
 After installing ([under Development](#Development)) the package, the following tools
 will be in your path:
 
-`teleop`:
+`acton_teleop`:
 - Passes joint from MyArmC to MyArmM, allowing for teleoperation of the MyArmM
 
-`validate_robot`: 
+`acton_validate`: 
 - Prints the firmware and hardware version of the MyArmM and MyArmC arms
 
-`calibrate_robot`:
+`acton_calibrate`:
 - Places the MyArmM into a zero'ed out position, and guides user through calibration of
   the MyArmC
 
