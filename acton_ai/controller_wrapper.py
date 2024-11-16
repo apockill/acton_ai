@@ -18,7 +18,7 @@ class HelpfulMyArmC(MyArmM):
         Joint(joint_id=4, flip=True),
         Joint(joint_id=5, flip=False),
         Joint(joint_id=6, flip=True),
-        Joint(joint_id=7, flip=False),
+        Joint(joint_id=7, flip=False, scaling_factor=2),
     ]
     """This maps joints from the MyArmC to the MyArmM, as observed by the author.
     Any value with a 5 was not found through empirical testing, and is arbitrary.
