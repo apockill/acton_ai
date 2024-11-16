@@ -9,6 +9,7 @@ def main() -> None:
 
     # Get the mover in a known state
     mover.bring_up_motors()
+    mover.prompt_user_to_bring_motors_into_bounds()
 
     while True:
         controller_angles = controller.get_joints_angle()

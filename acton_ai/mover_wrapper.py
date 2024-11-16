@@ -100,7 +100,8 @@ class HelpfulMyArmM(MyArmM):
         ), "Incorrect number of angles"
 
         if debug:
-            self.check_motors_in_bounds()
+            # This logs the motors that are out of bounds
+            self.check_out_of_bounds_motors()
 
         for joint in self.controller_joint_mapping:
             desired_angle: float = controller_angles[joint.array_idx]
@@ -112,10 +113,11 @@ class HelpfulMyArmM(MyArmM):
 
         self.set_joints_angle(controller_angles, speed)
 
-    def check_motors_in_bounds(self) -> bool:
-        """Check if the motors are within the true joint bounds"""
+    def check_out_of_bounds_motors(self) -> list[int]:
+        """Returns a list of motor IDs that are out of bounds, if any"""
 
         motor_angles = self.get_joints_angle()
+        out_of_bounds = []
         for joint in self.controller_joint_mapping:
             angle = motor_angles[joint.array_idx]
             minimum = self.true_joint_mins[joint.array_idx]
@@ -124,13 +126,36 @@ class HelpfulMyArmM(MyArmM):
                 logger.error(
                     f"Joint {joint.joint_id} is below the minimum: {angle=} {minimum=}"
                 )
-                return False
+                out_of_bounds.append(joint.joint_id)
             if angle > maximum:
                 logger.error(
                     f"Joint {joint.joint_id} is above the maximum: {angle=} {maximum=}"
                 )
-                return False
-        return True
+                out_of_bounds.append(joint.joint_id)
+        return out_of_bounds
+
+    def set_servos_enabled(self, state: bool) -> None:
+        """Set all servos to the given state"""
+
+        for joint in self.controller_joint_mapping:
+            self.set_servo_enabled(joint.joint_id, state)
+
+    def prompt_user_to_bring_motors_into_bounds(self) -> None:
+        """This function prompts the user to bring the motors into bounds"""
+
+        self.set_servos_enabled(False)
+
+        while True:
+            out_of_bounds = self.check_out_of_bounds_motors()
+            if not out_of_bounds:
+                break
+            logger.error(
+                f"Motors {out_of_bounds} are out of bounds. Please adjust the motors"
+            )
+            sleep(1)
+
+        logger.error("Locking servos!")
+        self.set_servos_enabled(True)
 
     def bring_up_motors(self) -> None:
         """This sequence is designed to bring up the motors reliably"""
