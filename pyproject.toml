@@ -23,9 +23,9 @@ cruft = "^2.15"
 darglint = "^1.8.1"
 
 [tool.poetry.scripts]
-validate_robot = "acton_ai.scripts.validate_robot:main"
-calibrate_robot = "acton_ai.scripts.calibrate_robot:main"
-teleop = "acton_ai.scripts.teleop:main"
+acton_validate = "acton_ai.scripts.validate_robot:main"
+acton_calibrate = "acton_ai.scripts.calibrate_robot:main"
+acton_teleop = "acton_ai.scripts.teleop:main"
 
 [build-system]
 requires = ["poetry>=0.12", "crc>=7.0.0"]

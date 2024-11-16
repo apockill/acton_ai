@@ -3,7 +3,7 @@
 My reppolicies for robot arms, and making them useful with multi-modal LLMs.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from pymycobot import MyArmC
 
