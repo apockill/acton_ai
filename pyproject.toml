@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acton_ai"
-version = "0.2.0"
+version = "0.3.0"
 description = "My reppolicies for robot arms, and making them useful with multi-modal LLMs."
 authors = ["apockill <apocthiel@gmail.com>"]
 license = "Proprietary"
