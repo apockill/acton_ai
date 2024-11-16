@@ -13,42 +13,18 @@ class MotorsNotPoweredError(Exception):
     pass
 
 
-@dataclass
-class _Joint:
-    joint_id: int
-    flip: bool
-    left_buffer: int
-    """This is the buffer to add to the joint minimum to prevent the robot from hitting
-    the physical limits, in degrees. Joint ID 2 especially seemed to need this."""
-
-    right_buffer: int
-    """This the buffer angle to subtract from the robots reported joint max, when
-    setting the joint angles."""
-
-    scaling_factor: float = 1.0
-    """This is a scaling factor to apply to the joint angles. This is useful for
-    adjusting grippers, if you want to have small motions lead to larger motions, or
-    vice versa."""
-
-    @property
-    def array_idx(self) -> int:
-        return self.joint_id - 1
-
-
 class HelpfulMyArmM(MyArmM):
     """A wrapper around MyArmM that works around idiosyncrasies in the API"""
 
     # TODO: In the make this loadable as a per-robot configuration file.
-    controller_joint_mapping = [
-        _Joint(joint_id=1, flip=True, left_buffer=5, right_buffer=5),
-        _Joint(joint_id=2, flip=True, left_buffer=20, right_buffer=10),
-        _Joint(joint_id=3, flip=True, left_buffer=5, right_buffer=5),
-        _Joint(joint_id=4, flip=True, left_buffer=5, right_buffer=5),
-        _Joint(joint_id=5, flip=False, left_buffer=5, right_buffer=10),
-        _Joint(joint_id=6, flip=True, left_buffer=5, right_buffer=5),
-        _Joint(
-            joint_id=7, flip=False, left_buffer=5, right_buffer=5, scaling_factor=1.5
-        ),
+    joint_bounds = [
+        Joint(joint_id=1, left_buffer=5, right_buffer=5),
+        Joint(joint_id=2, left_buffer=20, right_buffer=10),
+        Joint(joint_id=3, left_buffer=5, right_buffer=5),
+        Joint(joint_id=4, left_buffer=5, right_buffer=5),
+        Joint(joint_id=5, left_buffer=5, right_buffer=10),
+        Joint(joint_id=6, left_buffer=5, right_buffer=5),
+        Joint(joint_id=7, left_buffer=5, right_buffer=5),
     ]
     """This maps joints from the MyArmC to the MyArmM, as observed by the author.
     Any value with a 5 was not found through empirical testing, and is arbitrary.
@@ -57,14 +33,14 @@ class HelpfulMyArmM(MyArmM):
     @cached_property
     def bounded_joint_mins(self) -> tuple[int, ...]:
         mins = list(self.true_joint_mins)
-        for joint in self.controller_joint_mapping:
+        for joint in self.joint_bounds:
             mins[joint.array_idx] += joint.left_buffer
         return tuple(mins)
 
     @cached_property
     def bounded_joints_max(self) -> tuple[int, ...]:
         maxes = list(self.true_joints_max)
-        for joint in self.controller_joint_mapping:
+        for joint in self.joint_bounds:
             maxes[joint.array_idx] -= joint.right_buffer
         return tuple(maxes)
 
@@ -104,7 +80,7 @@ class HelpfulMyArmM(MyArmM):
             # This logs the motors that are out of bounds
             self.check_out_of_bounds_motors()
 
-        for joint in self.controller_joint_mapping:
+        for joint in self.joint_bounds:
             desired_angle: float = controller_angles[joint.array_idx]
             desired_angle = joint.apply_transform(desired_angle)
             desired_angle = self.clamp_angle(desired_angle, joint)
@@ -117,7 +93,7 @@ class HelpfulMyArmM(MyArmM):
 
         motor_angles = self.get_joints_angle()
         out_of_bounds = []
-        for joint in self.controller_joint_mapping:
+        for joint in self.joint_bounds:
             angle = motor_angles[joint.array_idx]
             minimum = self.true_joint_mins[joint.array_idx]
             maximum = self.true_joints_max[joint.array_idx]
@@ -136,7 +112,7 @@ class HelpfulMyArmM(MyArmM):
     def set_servos_enabled(self, state: bool) -> None:
         """Set all servos to the given state"""
 
-        for joint in self.controller_joint_mapping:
+        for joint in self.joint_bounds:
             self.set_servo_enabled(joint.joint_id, state)
 
     def prompt_user_to_bring_motors_into_bounds(self) -> None:
