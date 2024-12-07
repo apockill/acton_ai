@@ -40,6 +40,7 @@ def _find_arm(arm_cls: type[T]) -> T:
             ) from e
         except Exception as e:  # noqa: BLE001
             exceptions[port] = (type(e), str(e))
+            continue
 
         # This should be supported by both arms
         try:
