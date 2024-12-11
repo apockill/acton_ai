@@ -136,7 +136,6 @@ class HelpfulMyArmM(MyArmM):
     def bring_up_motors(self) -> None:
         """This sequence is designed to bring up the motors reliably"""
         # Sanity check communication is working
-        assert self.is_robot_moving() == 0, "Robot is moving, what's going on?"
         assert self.get_robot_firmware_version() > 0
 
         # Turn on power
