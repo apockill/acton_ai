@@ -7,7 +7,7 @@ from pymycobot import MyArmM
 from acton_ai.logger import logger
 
 from .joint import Joint
-
+import math
 
 class MotorsNotPoweredError(Exception):
     pass
@@ -85,6 +85,12 @@ class HelpfulMyArmM(MyArmM):
             desired_angle = joint.apply_transform(desired_angle)
             desired_angle = self.clamp_angle(desired_angle, joint)
             controller_angles[joint.array_idx] = desired_angle
+
+        # If the angle is less than 2 on joint_id=2, the robots firmware will not move
+        # any joints on the entire the robot! It's a painfully annoying bug. I did not
+        # write the firmware, so I don't know why this is the case.
+        if abs(controller_angles[1]) < 2:
+            controller_angles[1] = math.copysign(2.1, controller_angles[1])
 
         self.set_joints_angle(controller_angles, speed)
 
